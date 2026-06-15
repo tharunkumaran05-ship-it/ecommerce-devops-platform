@@ -1,22 +1,15 @@
-terraform {
-  required_version = ">= 1.0"
+resource "local_file" "project_info" {
+  filename = "${path.module}/terraform-created.txt"
 
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.0"
-    }
-  }
-}
+  content = <<EOT
+Project: Ecommerce DevOps Platform
 
-provider "aws" {
-  region = var.aws_region
-}
+Technologies:
+- Docker
+- Kubernetes
+- Helm
+- Terraform
 
-resource "aws_vpc" "main" {
-  cidr_block = var.vpc_cidr
-
-  tags = {
-    Name = "devops-project-vpc"
-  }
+Created by Terraform
+EOT
 }

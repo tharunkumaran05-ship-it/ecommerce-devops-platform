@@ -1,3 +1,3 @@
-output "vpc_name" {
-  value = aws_vpc.main.tags.Name
+output "project_name" {
+  value = var.project_name
 }
