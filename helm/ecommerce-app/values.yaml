@@ -1,0 +1,17 @@
+replicaCount: 1
+
+image:
+  repository: tharunm11/ecommerce-app
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 8080
+
+autoscaling:
+  enabled: false
+
+serviceAccount:
+  create: false
