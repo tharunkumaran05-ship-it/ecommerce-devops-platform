@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,6 +18,9 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/health", healthHandler)
+
+	// Prometheus Metrics Endpoint
+	http.Handle("/metrics", promhttp.Handler())
 
 	fmt.Println("Server running on port 8080")
 
