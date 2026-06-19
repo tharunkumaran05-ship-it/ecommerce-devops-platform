@@ -23,7 +23,7 @@ The app itself exposes a `/health` endpoint, a Prometheus `/metrics` endpoint wi
 - A full CI → CD pipeline triggered on every push, with GitHub Actions building and publishing a Docker image
 - GitOps deployment via Argo CD — the cluster state is reconciled from Git, not from manual `kubectl apply`
 - Kubernetes workloads packaged and templated with Helm rather than raw YAML
-- Infrastructure as Code with Terraform's Kubernetes provider, currently provisioning namespaces as the foundation for further automation
+- Infrastructure as Code using Terraform's Kubernetes provider for Kubernetes namespace provisioning and resource management
 - Custom application metrics instrumented directly in Go and scraped by Prometheus via a `ServiceMonitor`
 - Multi-stage Docker builds (`golang:1.26` build stage → `alpine` runtime) to keep the final image small
 
@@ -44,8 +44,7 @@ flowchart LR
     T[Terraform<br/>Kubernetes Provider] -.provisions namespaces.-> F
 ```
 
-Terraform sits alongside the deployment pipeline rather than in the critical path of every release — it provisions the Kubernetes-level infrastructure (namespaces today, more to come) that the rest of the pipeline deploys into.
-
+Terraform provisions Kubernetes resources using Infrastructure as Code principles while application delivery is handled through GitOps workflows.
 ---
 
 ## Tech Stack
@@ -69,7 +68,7 @@ Terraform sits alongside the deployment pipeline rather than in the critical pat
 
 ### 1. Live Dashboard
 
-The homepage isn't just a landing page — it shows the live status of every tool in the stack and pulls a real number from the app's own `/metrics` endpoint.
+The homepage provides a visual dashboard displaying the technologies used in the platform and links to `health` and `metrics` endpoints.
 
 ![Live dashboard](docs/screenshots/01-live-dashboard.png)
 ![Architecture, features & footer](docs/screenshots/02-live-dashboard-architecture.png)
@@ -137,7 +136,7 @@ ecommerce-devops-platform/
 ├── monitoring/
 │   └── servicemonitor.yaml     # Tells Prometheus what & how often to scrape
 ├── terraform/
-│   └── 03-k8s/                 # Terraform (Kubernetes provider) — namespace provisioning
+│   └── k8s/                 # Terraform (Kubernetes provider) — namespace provisioning
 └── README.md
 ```
 
@@ -320,10 +319,16 @@ In the actual environment, deployment is handled by Argo CD watching this repo �
 
 ## Roadmap
 
-- Expand Terraform beyond namespace provisioning to cover more of the cluster's infrastructure
-- Add Grafana alerting rules on top of the existing dashboards
-- Add automated tests to the CI pipeline ahead of the build step
-- Horizontal Pod Autoscaling based on the custom request metrics already being collected
+## Roadmap
+
+- Deploy the platform to AWS using EC2 or EKS
+- Expand Terraform to provision Kubernetes deployments, services, and monitoring resources
+- Add Grafana alerting for application health and resource utilization
+- Integrate automated testing into the GitHub Actions CI pipeline
+- Configure Ingress and custom domain access
+- Implement Horizontal Pod Autoscaling (HPA)
+- Add centralized logging using Loki and Grafana
+- Build a real microservices-based ecommerce backend
 
 ---
 
