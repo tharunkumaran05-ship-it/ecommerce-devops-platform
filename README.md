@@ -70,7 +70,7 @@ Terraform provisions Kubernetes resources using Infrastructure as Code principle
 
 The homepage provides a visual dashboard displaying the technologies used in the platform and links to `health` and `metrics` endpoints.
 
-![Live dashboard](docs/screenshots/01-live-dashboard.png)
+![Live dashboard](screenshots/01-live-dashboard.png)
 ![Architecture, features & footer](docs/screenshots/02-live-dashboard-architecture.png)
 
 ### 2. Continuous Integration — GitHub Actions
