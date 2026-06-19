@@ -1,237 +1,335 @@
+# 🚀 CommerceOps Platform
+
+A cloud-native e-commerce backend, built in Go, with a complete production-style delivery pipeline wrapped around it: **CI → containerization → GitOps deployment → Kubernetes orchestration → infrastructure as code → monitoring**.
+
+![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Multi--Stage%20Build-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Orchestration-326CE5?logo=kubernetes&logoColor=white)
+![Helm](https://img.shields.io/badge/Helm-Package%20Manager-0F1689?logo=helm&logoColor=white)
+![Argo CD](https://img.shields.io/badge/Argo%20CD-GitOps-EF7B4D?logo=argo&logoColor=white)
+![Terraform](https://img.shields.io/badge/Terraform-IaC-844FBA?logo=terraform&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-E6522C?logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-Visualization-F46800?logo=grafana&logoColor=white)
+
+---
+
+## Overview
+
+CommerceOps Platform is a small Go web service that I used as a vehicle to build and operate a **real, end-to-end DevOps pipeline** — not just a deployed app, but everything around it: automated builds, GitOps-driven releases, infrastructure as code, and observability with real metrics flowing through Prometheus and Grafana.
+
+The app itself exposes a `/health` endpoint, a Prometheus `/metrics` endpoint with a custom counter, and a homepage that doubles as a live status dashboard for the whole platform.
+
+**What this project demonstrates:**
+- A full CI → CD pipeline triggered on every push, with GitHub Actions building and publishing a Docker image
+- GitOps deployment via Argo CD — the cluster state is reconciled from Git, not from manual `kubectl apply`
+- Kubernetes workloads packaged and templated with Helm rather than raw YAML
+- Infrastructure as Code with Terraform's Kubernetes provider, currently provisioning namespaces as the foundation for further automation
+- Custom application metrics instrumented directly in Go and scraped by Prometheus via a `ServiceMonitor`
+- Multi-stage Docker builds (`golang:1.26` build stage → `alpine` runtime) to keep the final image small
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[Developer Push] --> B[GitHub]
+    B --> C[GitHub Actions<br/>CI: build, test, push]
+    C --> D[Docker Hub]
+    D --> E[Argo CD<br/>GitOps Sync]
+    E --> F[Kubernetes Cluster]
+    F --> G[Prometheus<br/>Scrapes /metrics]
+    G --> H[Grafana<br/>Dashboards]
+
+    T[Terraform<br/>Kubernetes Provider] -.provisions namespaces.-> F
+```
+
+Terraform sits alongside the deployment pipeline rather than in the critical path of every release — it provisions the Kubernetes-level infrastructure (namespaces today, more to come) that the rest of the pipeline deploys into.
+
+---
+
+## Tech Stack
+
+| Layer               | Tool                        | Purpose                                          |
+|---------------------|------------------------------|---------------------------------------------------|
+| Application          | Go 1.26                     | HTTP server, custom Prometheus instrumentation     |
+| Containerization     | Docker (multi-stage build)  | Small, reproducible runtime image                  |
+| CI                   | GitHub Actions              | Build, test, and publish on every push             |
+| Image Registry       | Docker Hub                  | Stores versioned application images                |
+| Infrastructure as Code | Terraform (Kubernetes provider) | Provisions Kubernetes-level resources (namespaces) |
+| Orchestration        | Kubernetes                  | Runs and manages the application and monitoring stack |
+| Package Management   | Helm                        | Templated, versioned Kubernetes deployments         |
+| GitOps / CD          | Argo CD                     | Continuous, Git-driven deployment to the cluster    |
+| Monitoring           | Prometheus + kube-prometheus-stack | Scrapes app and cluster metrics              |
+| Visualization        | Grafana                     | Dashboards for HTTP traffic, Go runtime, system resources |
+
+---
+
+## Pipeline Walkthrough
+
+### 1. Live Dashboard
+
+The homepage isn't just a landing page — it shows the live status of every tool in the stack and pulls a real number from the app's own `/metrics` endpoint.
+
+![Live dashboard](docs/screenshots/01-live-dashboard.png)
+![Architecture, features & footer](docs/screenshots/02-live-dashboard-architecture.png)
+
+### 2. Continuous Integration — GitHub Actions
+
+Every push to `main` triggers the **Go CI Pipeline**, which builds the Go binary, builds the Docker image, and publishes it. All recent runs are green.
+
+![GitHub Actions CI runs](docs/screenshots/03-github-actions-ci.png)
+
+### 3. Image Registry — Docker Hub
+
+The CI pipeline publishes versioned images to Docker Hub, which Argo CD/Kubernetes then pull from.
+
+![Docker Hub registry](docs/screenshots/04-dockerhub-registry.png)
+
+### 4. GitOps Deployment — Argo CD
+
+Argo CD continuously reconciles the cluster against the `helm/ecommerce-app` path in this repo. No manual `kubectl apply` for deployments — Git is the source of truth.
+
+![Argo CD application](docs/screenshots/05-argocd-gitops.png)
+
+### 5. Kubernetes Orchestration
+
+The application and the entire `kube-prometheus-stack` monitoring stack run as pods in the cluster, exposed via Services.
+
+![kubectl get pods](docs/screenshots/06-kubectl-pods.png)
+![kubectl get svc](docs/screenshots/07-kubectl-services.png)
+
+### 6. Package Management — Helm
+
+The app is deployed as a Helm release (not raw manifests), versioned and upgradeable.
+
+![helm list](docs/screenshots/08-helm-releases.png)
+
+### 7. Observability — Prometheus & Grafana
+
+A `ServiceMonitor` tells Prometheus to scrape the app's `/metrics` endpoint every 15 seconds. The custom `http_requests_total` counter — incremented on every real request — flows from the Go app, through Prometheus, into a Grafana dashboard.
+
+![Prometheus target healthy](docs/screenshots/09-prometheus-targets.png)
+![Raw /metrics output](docs/screenshots/10-prometheus-raw-metrics.png)
+![Grafana dashboards](docs/screenshots/11-grafana-dashboards.png)
+![Grafana Total HTTP Requests panel](docs/screenshots/12-grafana-http-requests-panel.png)
+
+---
+
+## Project Structure
+
+```
+ecommerce-devops-platform/
+├── .github/
+│   └── workflows/              # CI pipeline (build, test, push image)
+├── app/                        # Go application source
+│   ├── Dockerfile
+│   ├── go.mod / go.sum
+│   └── main.go
+├── helm/
+│   └── ecommerce-app/          # Helm chart for the app
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       └── templates/
+├── kubernetes/                 # Plain K8s manifests
+│   ├── deployment.yaml
+│   └── service.yaml
+├── monitoring/
+│   └── servicemonitor.yaml     # Tells Prometheus what & how often to scrape
+├── terraform/
+│   └── 03-k8s/                 # Terraform (Kubernetes provider) — namespace provisioning
+└── README.md
+```
+
+---
+
+## Key Configuration
+
+**`app/Dockerfile`** — multi-stage build to keep the runtime image small:
+
+```dockerfile
+# Build Stage
+FROM golang:1.26 AS builder
+
+WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ecommerce-app
+
+# Runtime Stage
+FROM alpine:latest
+
+WORKDIR /root/
+
+COPY --from=builder /app/ecommerce-app .
+
+EXPOSE 8080
+
+CMD ["./ecommerce-app"]
+```
+
+**`app/main.go`** — custom Prometheus counter wired into the handlers:
 
 ```go
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	httpRequestsTotal.Inc()
+var httpRequestsTotal = prometheus.NewCounter(
+    prometheus.CounterOpts{
+        Name: "http_requests_total",
+        Help: "Total number of HTTP requests",
+    },
+)
 
-	html := `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>CommerceOps Platform</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+func main() {
+    prometheus.MustRegister(httpRequestsTotal)
 
-    <style>
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-            font-family:Arial,sans-serif;
-        }
+    http.HandleFunc("/", homeHandler)
+    http.HandleFunc("/health", healthHandler)
+    http.Handle("/metrics", promhttp.Handler())
 
-        body{
-            background:linear-gradient(135deg,#0f172a,#1e293b);
-            color:white;
-            min-height:100vh;
-            padding:40px;
-        }
-
-        .container{
-            max-width:1200px;
-            margin:auto;
-        }
-
-        .hero{
-            text-align:center;
-            margin-bottom:40px;
-        }
-
-        .hero h1{
-            font-size:3rem;
-            margin-bottom:10px;
-        }
-
-        .hero p{
-            color:#cbd5e1;
-            font-size:1.2rem;
-        }
-
-        .grid{
-            display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-            gap:20px;
-            margin-top:30px;
-        }
-
-        .card{
-            background:#1e293b;
-            border-radius:16px;
-            padding:25px;
-            text-align:center;
-            box-shadow:0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .card h3{
-            margin-bottom:10px;
-        }
-
-        .status{
-            color:#22c55e;
-            font-weight:bold;
-        }
-
-        .buttons{
-            margin-top:35px;
-            text-align:center;
-        }
-
-        .btn{
-            display:inline-block;
-            background:#3b82f6;
-            color:white;
-            text-decoration:none;
-            padding:12px 24px;
-            border-radius:8px;
-            margin:10px;
-            transition:0.3s;
-        }
-
-        .btn:hover{
-            background:#2563eb;
-        }
-
-        .section{
-            margin-top:40px;
-            background:#1e293b;
-            padding:25px;
-            border-radius:16px;
-        }
-
-        .section h2{
-            margin-bottom:15px;
-        }
-
-        ul{
-            padding-left:20px;
-            line-height:2;
-        }
-
-        footer{
-            text-align:center;
-            margin-top:40px;
-            color:#94a3b8;
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="container">
-
-    <div class="hero">
-        <h1>🚀 CommerceOps Platform</h1>
-        <p>End-to-End DevOps Platform using Go, Kubernetes, GitOps & Monitoring</p>
-    </div>
-
-    <div class="grid">
-
-        <div class="card">
-            <h3>🐳 Docker</h3>
-            <p class="status">Containerized</p>
-        </div>
-
-        <div class="card">
-            <h3>🏗 Terraform</h3>
-            <p class="status">Kubernetes Resources</p>
-        </div>
-
-        <div class="card">
-            <h3>☸ Kubernetes</h3>
-            <p class="status">Running</p>
-        </div>
-
-        <div class="card">
-            <h3>📦 Helm</h3>
-            <p class="status">Deployed</p>
-        </div>
-
-        <div class="card">
-            <h3>⚙ GitHub Actions</h3>
-            <p class="status">CI/CD Active</p>
-        </div>
-
-        <div class="card">
-            <h3>🔄 Argo CD</h3>
-            <p class="status">GitOps Enabled</p>
-        </div>
-
-        <div class="card">
-            <h3>🔥 Prometheus</h3>
-            <p class="status">Metrics Scraping</p>
-        </div>
-
-        <div class="card">
-            <h3>📊 Grafana</h3>
-            <p class="status">Dashboards Active</p>
-        </div>
-
-    </div>
-
-    <div class="buttons">
-        <a class="btn" href="/health">Health Check</a>
-        <a class="btn" href="/metrics">Metrics</a>
-    </div>
-
-    <div class="section">
-        <h2>Deployment Workflow</h2>
-
-        <p>
-        Developer → GitHub → GitHub Actions →
-        Docker Hub → Argo CD →
-        Kubernetes → Prometheus → Grafana
-        </p>
-
-        <br>
-
-        <p>
-        Terraform → Kubernetes Infrastructure
-        </p>
-    </div>
-
-    <div class="section">
-        <h2>Project Features</h2>
-
-        <ul>
-            <li>Go-based Web Application</li>
-            <li>Docker Multi-Stage Containerization</li>
-            <li>Kubernetes Deployment & Service Management</li>
-            <li>Helm Chart Packaging</li>
-            <li>GitHub Actions CI/CD Automation</li>
-            <li>GitOps Deployment using Argo CD</li>
-            <li>Infrastructure as Code using Terraform</li>
-            <li>Prometheus Metrics Collection</li>
-            <li>Grafana Monitoring Dashboards</li>
-            <li>Custom HTTP Request Metrics (http_requests_total)</li>
-        </ul>
-    </div>
-
-    <div class="section">
-        <h2>Tech Stack</h2>
-
-        <ul>
-            <li>Go (Golang)</li>
-            <li>Docker</li>
-            <li>Kubernetes</li>
-            <li>Helm</li>
-            <li>Terraform</li>
-            <li>GitHub Actions</li>
-            <li>Argo CD</li>
-            <li>Prometheus</li>
-            <li>Grafana</li>
-        </ul>
-    </div>
-
-    <footer>
-        <p>Built by Richard Benjamin</p>
-        <p>Aspiring DevOps Engineer | Kubernetes | Monitoring | Automation</p>
-    </footer>
-
-</div>
-
-</body>
-</html>
-`
-
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, html)
+    http.ListenAndServe(":8080", nil)
 }
 ```
+
+**`kubernetes/deployment.yaml`**
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecommerce-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ecommerce-app
+  template:
+    metadata:
+      labels:
+        app: ecommerce-app
+    spec:
+      containers:
+        - name: ecommerce-app
+          image: ecommerce-app:v1
+          ports:
+            - containerPort: 8080
+```
+
+**`kubernetes/service.yaml`**
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ecommerce-service
+spec:
+  selector:
+    app: ecommerce-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: NodePort
+```
+
+**`helm/ecommerce-app/values.yaml`**
+
+```yaml
+replicaCount: 1
+
+image:
+  repository: tharunm11/ecommerce-app
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 8080
+
+autoscaling:
+  enabled: false
+
+serviceAccount:
+  create: false
+```
+
+**`monitoring/servicemonitor.yaml`**
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ecommerce-app
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ecommerce-app
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+```
+
+---
+
+## Getting Started
+
+### Run locally
+
+```bash
+cd app
+go mod download
+go run main.go
+# App available at http://localhost:8080
+# Metrics at http://localhost:8080/metrics
+```
+
+### Run with Docker
+
+```bash
+cd app
+docker build -t ecommerce-app:local .
+docker run -p 8080:8080 ecommerce-app:local
+```
+
+### Deploy to Kubernetes
+
+```bash
+# Provision infrastructure
+cd terraform/03-k8s
+terraform init
+terraform apply
+
+# Deploy the app via Helm
+helm install ecommerce-app helm/ecommerce-app
+
+# Wire up monitoring
+kubectl apply -f monitoring/servicemonitor.yaml
+```
+
+In the actual environment, deployment is handled by Argo CD watching this repo — the steps above are for spinning up a fresh cluster manually.
+
+---
+
+## Roadmap
+
+- Expand Terraform beyond namespace provisioning to cover more of the cluster's infrastructure
+- Add Grafana alerting rules on top of the existing dashboards
+- Add automated tests to the CI pipeline ahead of the build step
+- Horizontal Pod Autoscaling based on the custom request metrics already being collected
+
+---
+
+## Author
+
+**Tharun Kumaran**
+DevOps Engineer | Cloud Enthusiast
+
+[GitHub](https://github.com/tharunkumaran05-ship-it) · [Repository](https://github.com/tharunkumaran05-ship-it/ecommerce-devops-platform)
