@@ -1,3 +1,4 @@
+```go
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	httpRequestsTotal.Inc()
 
@@ -117,7 +118,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
     <div class="hero">
         <h1>🚀 CommerceOps Platform</h1>
-        <p>Kubernetes, GitOps & Observability Platform</p>
+        <p>End-to-End DevOps Platform using Go, Kubernetes, GitOps & Monitoring</p>
     </div>
 
     <div class="grid">
@@ -129,7 +130,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
         <div class="card">
             <h3>🏗 Terraform</h3>
-            <p class="status">Infrastructure as Code</p>
+            <p class="status">Kubernetes Resources</p>
         </div>
 
         <div class="card">
@@ -170,18 +171,18 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
     </div>
 
     <div class="section">
-        <h2>Architecture</h2>
+        <h2>Deployment Workflow</h2>
 
         <p>
-        GitHub → GitHub Actions → Docker Hub →
-        Argo CD → Kubernetes →
-        Prometheus → Grafana
+        Developer → GitHub → GitHub Actions →
+        Docker Hub → Argo CD →
+        Kubernetes → Prometheus → Grafana
         </p>
 
         <br>
 
         <p>
-        Terraform → Kubernetes Resources
+        Terraform → Kubernetes Infrastructure
         </p>
     </div>
 
@@ -189,21 +190,38 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
         <h2>Project Features</h2>
 
         <ul>
-            <li>Infrastructure as Code using Terraform (Kubernetes Provider)</li>
-            <li>Go-based Application with Custom Metrics</li>
-            <li>Docker Containerization</li>
-            <li>Kubernetes Orchestration</li>
-            <li>Helm Package Management</li>
-            <li>GitHub Actions CI/CD Pipeline</li>
+            <li>Go-based Web Application</li>
+            <li>Docker Multi-Stage Containerization</li>
+            <li>Kubernetes Deployment & Service Management</li>
+            <li>Helm Chart Packaging</li>
+            <li>GitHub Actions CI/CD Automation</li>
             <li>GitOps Deployment using Argo CD</li>
-            <li>Prometheus Monitoring</li>
-            <li>Grafana Dashboards</li>
+            <li>Infrastructure as Code using Terraform</li>
+            <li>Prometheus Metrics Collection</li>
+            <li>Grafana Monitoring Dashboards</li>
+            <li>Custom HTTP Request Metrics (http_requests_total)</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Tech Stack</h2>
+
+        <ul>
+            <li>Go (Golang)</li>
+            <li>Docker</li>
+            <li>Kubernetes</li>
+            <li>Helm</li>
+            <li>Terraform</li>
+            <li>GitHub Actions</li>
+            <li>Argo CD</li>
+            <li>Prometheus</li>
+            <li>Grafana</li>
         </ul>
     </div>
 
     <footer>
         <p>Built by Richard Benjamin</p>
-        <p>DevOps | Kubernetes | Monitoring | Automation</p>
+        <p>Aspiring DevOps Engineer | Kubernetes | Monitoring | Automation</p>
     </footer>
 
 </div>
@@ -215,3 +233,4 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprint(w, html)
 }
+```
