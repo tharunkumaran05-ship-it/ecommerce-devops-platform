@@ -77,41 +77,41 @@ The homepage provides a visual dashboard displaying the technologies used in the
 
 Every push to `main` triggers the **Go CI Pipeline**, which builds the Go binary, builds the Docker image, and publishes it. All recent runs are green.
 
-![GitHub Actions CI runs](docs/screenshots/03-github-actions-ci.png)
+![GitHub Actions CI runs](screenshots/03-github-actions-ci.png)
 
 ### 3. Image Registry — Docker Hub
 
 The CI pipeline publishes versioned images to Docker Hub, which Argo CD/Kubernetes then pull from.
 
-![Docker Hub registry](docs/screenshots/04-dockerhub-registry.png)
+![Docker Hub registry](screenshots/04-dockerhub-registry.png)
 
 ### 4. GitOps Deployment — Argo CD
 
 Argo CD continuously reconciles the cluster against the `helm/ecommerce-app` path in this repo. No manual `kubectl apply` for deployments — Git is the source of truth.
 
-![Argo CD application](docs/screenshots/05-argocd-gitops.png)
+![Argo CD application](screenshots/05-argocd-gitops.png)
 
 ### 5. Kubernetes Orchestration
 
 The application and the entire `kube-prometheus-stack` monitoring stack run as pods in the cluster, exposed via Services.
 
-![kubectl get pods](docs/screenshots/06-kubectl-pods.png)
-![kubectl get svc](docs/screenshots/07-kubectl-services.png)
+![kubectl get pods](screenshots/06-kubectl-pods.png)
+![kubectl get svc](screenshots/07-kubectl-services.png)
 
 ### 6. Package Management — Helm
 
 The app is deployed as a Helm release (not raw manifests), versioned and upgradeable.
 
-![helm list](docs/screenshots/08-helm-releases.png)
+![helm list](screenshots/08-helm-releases.png)
 
 ### 7. Observability — Prometheus & Grafana
 
 A `ServiceMonitor` tells Prometheus to scrape the app's `/metrics` endpoint every 15 seconds. The custom `http_requests_total` counter — incremented on every real request — flows from the Go app, through Prometheus, into a Grafana dashboard.
 
-![Prometheus target healthy](docs/screenshots/09-prometheus-targets.png)
-![Raw /metrics output](docs/screenshots/10-prometheus-raw-metrics.png)
-![Grafana dashboards](docs/screenshots/11-grafana-dashboards.png)
-![Grafana Total HTTP Requests panel](docs/screenshots/12-grafana-http-requests-panel.png)
+![Prometheus target healthy](screenshots/09-prometheus-targets.png)
+![Raw /metrics output](screenshots/10-prometheus-raw-metrics.png)
+![Grafana dashboards](screenshots/11-grafana-dashboards.png)
+![Grafana Total HTTP Requests panel](screenshots/12-grafana-http-requests-panel.png)
 
 ---
 
