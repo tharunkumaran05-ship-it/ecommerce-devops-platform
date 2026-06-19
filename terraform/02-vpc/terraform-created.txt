@@ -1,9 +1,0 @@
-Project: Ecommerce DevOps Platform
-
-Technologies:
-- Docker
-- Kubernetes
-- Helm
-- Terraform
-
-Created by Terraform
