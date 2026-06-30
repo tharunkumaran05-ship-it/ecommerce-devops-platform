@@ -337,4 +337,4 @@ In the actual environment, deployment is handled by Argo CD watching this repo �
 **Tharun Kumaran**
 Aspiring DevOps Engineer
 
-[GitHub](https://github.com/tharunkumaran05-ship-it) · [Repository](https://github.com/tharunkumaran05-ship-it/ecommerce-devops-platform)
+[GitHub](https://github.com/tharunkumaran11) · [Repository](https://github.com/tharunkumaran11/commerceops-platform)
